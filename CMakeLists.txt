@@ -10,3 +10,5 @@ file(GLOB_RECURSE SRC_FILES
 list(FILTER SRC_FILES EXCLUDE REGEX "/cmake[^/]*/")
 
 add_executable(${PROJECT_NAME} ${SRC_FILES})
+
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/3rd_party/abseil-cpp)
