@@ -1,1 +1,12 @@
 .idea/
+
+data/
+
+# Ignore large XML and compressed files
+*.xml
+*.bz2
+*.gz
+
+# Ignore build artifacts
+build/
+cmake-build-debug/
