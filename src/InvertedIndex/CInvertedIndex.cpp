@@ -14,7 +14,7 @@ void CInvertedIndex::AddToken(absl::string_view token, uint32_t ID)
     }
 }
 
-const std::vector<uint32_t>& CInvertedIndex::GetIDsOfToken(const absl::string_view token)
+const std::vector<uint32_t>& CInvertedIndex::GetIDsOfToken(const absl::string_view token) const
 {
     auto it = m_invertedIndex.find(token);
     if (it != m_invertedIndex.end())
@@ -25,7 +25,7 @@ const std::vector<uint32_t>& CInvertedIndex::GetIDsOfToken(const absl::string_vi
     return m_emptyVector;
 }
 
-std::vector<uint32_t> CInvertedIndex::Search(absl::string_view searchString)
+std::vector<uint32_t> CInvertedIndex::Search(absl::string_view searchString) const
 {
     std::vector<uint32_t> result;
     std::vector<uint32_t> temp1;
