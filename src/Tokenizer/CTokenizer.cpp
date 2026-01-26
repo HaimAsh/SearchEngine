@@ -4,8 +4,16 @@
 
 #include "CTokenizer.h"
 #include "absl/strings/ascii.h"
+#include "absl/strings/match.h"
 
 constexpr uint32_t NORMALIZE_WORD_SIZE = 120;
+
+const absl::flat_hash_set<absl::string_view> CTokenizer::m_stopWords = {
+    "a", "an", "and", "are", "as", "at", "be", "but", "by", "for",
+    "if", "in", "into", "is", "it", "no", "not", "of", "on", "or",
+    "such", "that", "the", "their", "then", "there", "these",
+    "they", "this", "to", "was", "will", "with", "http", "https", "www"
+};
 
 CTokenizer::CTokenizer(std::string_view text) noexcept : m_text(text)
 {
@@ -21,13 +29,40 @@ bool CTokenizer::HasNext() const
 
 std::string_view CTokenizer::Next()
 {
-    m_normalizeWord.assign(m_currentToken.data(), m_currentToken.size());
+    auto endOfStopWord = m_stopWords.end();
+    absl::string_view lookUpView;
 
-    absl::AsciiStrToLower(&m_normalizeWord); // Use the pointer version to do it in-place
+    while (HasNext())
+    {
+        // 1. Check length immediately.
+        // If it's > 5, it CAN'T be a stop word. Skip the hash lookup entirely!
+        if (m_currentToken.size() > 5)
+        {
+            m_normalizeWord.assign(m_currentToken.data(), m_currentToken.size());
+            absl::AsciiStrToLower(&m_normalizeWord);
+            FindWord();
+            return m_normalizeWord;
+        }
 
-    FindWord();
+        // 2. If it's small, it MIGHT be a stop word.
+        // We must normalize to check the set (since our set is lowercase).
+        m_normalizeWord.assign(m_currentToken.data(), m_currentToken.size());
+        absl::AsciiStrToLower(&m_normalizeWord);
 
-    return m_normalizeWord;
+        // Save the raw token's state before moving the pointer
+        FindWord();
+
+        lookUpView = m_normalizeWord;
+        // 3. Perform the O(1) Hash Lookup
+        if (m_stopWords.find(lookUpView) == m_stopWords.end())
+        {
+            return m_normalizeWord;
+        }
+
+        // If it was a stop word, the loop continues...
+    }
+
+    return "";
 }
 
 void CTokenizer::FindWord()
