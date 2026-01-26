@@ -14,9 +14,9 @@ class CInvertedIndex
 {
 public:
     void AddToken(absl::string_view token, uint32_t ID);
-    const std::vector<uint32_t>& GetIDsOfToken(const absl::string_view token);
+    const std::vector<uint32_t>& GetIDsOfToken(const absl::string_view token) const;
 
-    std::vector<uint32_t> Search(absl::string_view searchString);
+    [[nodiscard]] std::vector<uint32_t> Search(absl::string_view searchString) const;
 
     [[nodiscard]] size_t GetUniqueWordCount() const;
 
@@ -29,8 +29,6 @@ private:
     static void Intersect(const std::vector<uint32_t>& v1,
                    const std::vector<uint32_t>& v2,
                    std::vector<uint32_t>& result);
-
-    static void BreakString(absl::string_view str, std::vector<std::string>& result);
 
     absl::flat_hash_map<std::string, std::vector<uint32_t>> m_invertedIndex;
 
