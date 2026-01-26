@@ -34,6 +34,16 @@ std::string_view CTokenizer::Next()
 
     while (HasNext())
     {
+        // --- THE GARBAGE FILTER ---
+        // Skip tokens that are too short, too long, or don't start with a letter.
+        if (m_currentToken.size() < 2 ||
+            m_currentToken.size() > 30 ||
+            !absl::ascii_isalpha(m_currentToken[0]))
+        {
+            FindWord();
+            continue;
+        }
+
         // 1. Check length immediately.
         // If it's > 5, it CAN'T be a stop word. Skip the hash lookup entirely!
         if (m_currentToken.size() > 5)
