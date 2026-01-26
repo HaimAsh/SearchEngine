@@ -40,12 +40,12 @@ bool CSearchEngine::Init(const std::string &filePath)
 
 void CSearchEngine::Search(const std::string &query, std::vector<std::string>& hits) const
 {
-    std::vector<uint32_t> res = m_invertedIndex.Search(query);
+    std::vector<std::pair<uint32_t, uint32_t>> res = m_invertedIndex.Search(query);
     hits.clear();
     hits.reserve(res.size());
 
     for (auto& iter : res)
     {
-        hits.push_back(m_invertedIndex.GetTitle(iter));
+        hits.push_back(m_invertedIndex.GetTitle(iter.first));
     }
 }

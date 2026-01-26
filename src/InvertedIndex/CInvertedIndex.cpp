@@ -6,30 +6,44 @@
 
 void CInvertedIndex::AddToken(absl::string_view token, uint32_t ID)
 {
-    std::vector<uint32_t>& IDs = m_invertedIndex[token];
+    std::vector<std::pair<uint32_t, uint32_t>>& IDs = m_invertedIndex[token];
 
-    if (IDs.empty() || IDs.back() != ID)
+    if (IDs.empty() || IDs.back().first != ID)
     {
-        IDs.push_back(ID);
+        IDs.emplace_back(ID, 0);
+    }
+    else
+    {
+        IDs.back().second++;
     }
 }
 
-const std::vector<uint32_t>& CInvertedIndex::GetIDsOfToken(const absl::string_view token) const
+std::vector<uint32_t> CInvertedIndex::GetIDsOfToken(const absl::string_view token) const
 {
     auto it = m_invertedIndex.find(token);
+    std::vector<uint32_t> result;
+
     if (it != m_invertedIndex.end())
     {
-        return it->second;
+        std::vector<std::pair<uint32_t, uint32_t>> current = it->second;
+        result.reserve(current.size());
+
+        for (auto& curr : current)
+        {
+            result.emplace_back(curr.first);
+        }
+
+        return result;
     }
 
     return m_emptyVector;
 }
 
-std::vector<uint32_t> CInvertedIndex::Search(absl::string_view searchString) const
+std::vector<std::pair<uint32_t, uint32_t>> CInvertedIndex::Search(absl::string_view searchString) const
 {
-    std::vector<uint32_t> result;
-    std::vector<uint32_t> temp1;
-    std::vector<uint32_t> temp2;
+    std::vector<std::pair<uint32_t, uint32_t>> result;
+    std::vector<std::pair<uint32_t, uint32_t>> temp1;
+    std::vector<std::pair<uint32_t, uint32_t>> temp2;
     std::vector<std::string> tokens;
     tokens.reserve(32);
 
@@ -45,10 +59,10 @@ std::vector<uint32_t> CInvertedIndex::Search(absl::string_view searchString) con
 
     if (tokens.empty())
     {
-        return m_emptyVector;
+        return m_emptyPairsVector;
     }
 
-    const auto& firstList = GetIDsOfToken(tokens.back());
+    const auto& firstList = GetPairsOfToken(tokens.back());
     result.assign(firstList.begin(), firstList.end());
     tokens.pop_back();
 
@@ -57,10 +71,10 @@ std::vector<uint32_t> CInvertedIndex::Search(absl::string_view searchString) con
 
         if (result.empty())
         {
-            return m_emptyVector;
+            return m_emptyPairsVector;
         }
 
-        temp2 = GetIDsOfToken(tokens.back());
+        temp2 = GetPairsOfToken(tokens.back());
         tokens.pop_back();
 
         Intersect(result, temp2, temp1);
@@ -81,6 +95,7 @@ void CInvertedIndex::AddTitle(uint32_t ID, absl::string_view title)
 {
     if (ID >= m_docTitles.size()) {
         m_docTitles.resize(ID + 1);
+        m_numOfDocs++;
     }
     m_docTitles[ID] = std::string(title);
 }
@@ -90,21 +105,34 @@ const std::string& CInvertedIndex::GetTitle(uint32_t ID) const
     return m_docTitles[ID];
 }
 
-void CInvertedIndex::Intersect(const std::vector<uint32_t> &v1,
-    const std::vector<uint32_t> &v2, std::vector<uint32_t>& result)
+const std::vector<std::pair<uint32_t, uint32_t>>&
+CInvertedIndex::GetPairsOfToken(const absl::string_view token) const
+{
+    auto it = m_invertedIndex.find(token);
+    if (it != m_invertedIndex.end())
+    {
+        return it->second; // Return the reference directly
+    }
+
+    // We need an empty vector of pairs as a static member to return if not found
+    return m_emptyPairsVector;
+}
+
+void CInvertedIndex::Intersect(const std::vector<std::pair<uint32_t, uint32_t>> &v1,
+    const std::vector<std::pair<uint32_t, uint32_t>> &v2, std::vector<std::pair<uint32_t, uint32_t>>& result)
 {
     auto v1Iter = v1.begin();
     auto v2Iter = v2.begin();
 
     while (v1Iter != v1.end() && v2Iter != v2.end())
     {
-        if (*v1Iter == *v2Iter)
+        if (v1Iter->first == v2Iter->first)
         {
-            result.push_back(*v1Iter);
+            result.emplace_back(v1Iter->first, v1Iter->second + v2Iter->second);
             ++v1Iter;
             ++v2Iter;
         }
-        else if (*v1Iter < *v2Iter)
+        else if (v1Iter->first < v2Iter->first)
         {
             ++v1Iter;
         }
