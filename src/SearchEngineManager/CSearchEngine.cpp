@@ -4,8 +4,10 @@
 
 #include "CSearchEngine.h"
 
-bool CSearchEngine::Init(const std::string &filePath)
+bool CSearchEngine::Init(const std::string &filePath, IRanker* ranker)
 {
+    m_ranker = ranker;
+
     try
     {
         CWikiMediaParser parser([&](const CDocument& doc)
@@ -44,8 +46,10 @@ void CSearchEngine::Search(const std::string &query, std::vector<std::string>& h
     hits.clear();
     hits.reserve(res.size());
 
-    for (auto& iter : res)
+    std::vector<uint32_t> sortedRes = m_ranker->Rank(res, m_invertedIndex.GetNumOfDocs());
+
+    for (auto& iter : sortedRes)
     {
-        hits.push_back(m_invertedIndex.GetTitle(iter.first));
+        hits.push_back(m_invertedIndex.GetTitle(iter));
     }
 }
