@@ -68,15 +68,11 @@ int main()
     int choice;
     std::cin >> choice;
 
-    RankerType type = RankerType::BM25; // Default
-    if (choice == 1)
-    {
-        type = RankerType::FREQUENCY;
-    }
-    else if (choice == 2)
-    {
-        type = RankerType::TF_IDF;
-    }
+    // Add this to clear the newline character
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+    RankerType type = static_cast<RankerType>(choice - 1);
+    searchEngine.SetRanker(RankerFactory::CreateRanker(type));
 
     searchEngine.SetRanker(RankerFactory::CreateRanker(type));
 
