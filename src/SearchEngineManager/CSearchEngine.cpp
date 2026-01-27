@@ -46,7 +46,8 @@ void CSearchEngine::Search(const std::string &query, std::vector<std::string>& h
     hits.clear();
     hits.reserve(res.size());
 
-    std::vector<uint32_t> sortedRes = m_ranker->Rank(res, m_invertedIndex.GetNumOfDocs());
+    std::vector<uint32_t> sortedRes;
+    m_ranker->Rank(res, m_invertedIndex.GetNumOfDocs(), sortedRes);
 
     for (auto& iter : sortedRes)
     {
