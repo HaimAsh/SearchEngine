@@ -10,3 +10,4 @@ data/
 # Ignore build artifacts
 build/
 cmake-build-debug/
+/cmake-build-release/
