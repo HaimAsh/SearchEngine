@@ -9,6 +9,7 @@
 
 class CFrequencyRanker : public IRanker
 {
+public:
     [[nodiscard]] std::vector<uint32_t> Rank(
         const std::vector<std::pair<uint32_t, uint32_t>>& matches,
         size_t totalDocs) const override;
