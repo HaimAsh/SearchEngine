@@ -13,6 +13,7 @@ public:
         void Rank(
         const std::vector<TermPostings>& queryPosting,
         const std::vector<uint32_t>& docLengths,
+        const std::vector<std::string>& docTitles,
         std::vector<uint32_t>& outSortedIds) const override;
 };
 

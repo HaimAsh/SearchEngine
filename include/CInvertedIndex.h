@@ -43,6 +43,11 @@ public:
         return m_docWordCounts;
     }
 
+    const std::vector<std::string>& GetDocsTitles() const
+    {
+        return m_docTitles;
+    }
+
 private:
 
     absl::flat_hash_map<std::string, std::vector<std::pair<uint32_t, uint32_t>>> m_invertedIndex;
