@@ -19,15 +19,20 @@ public:
     CSearchEngine& operator=(const CSearchEngine &) = delete;
     CSearchEngine(const CSearchEngine &) = delete;
 
-    [[nodiscard]] bool Init(const std::string& filePath, IRanker* ranker);
+    [[nodiscard]] bool Init(const std::string& filePath);
 
     void Search(const std::string& query, std::vector<std::string>& hits) const;
 
     [[nodiscard]] size_t GetWordCount() const { return m_invertedIndex.GetUniqueWordCount(); }
 
+    void SetRanker(std::unique_ptr<IRanker> newRanker)
+    {
+        m_ranker = std::move(newRanker);
+    }
+
 private:
     CInvertedIndex m_invertedIndex;
-    IRanker* m_ranker = nullptr;
+    std::unique_ptr<IRanker> m_ranker = nullptr;
 };
 
 #endif //SEARCHENGINE_CSEARCHENGINE_H
