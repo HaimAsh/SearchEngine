@@ -13,9 +13,10 @@ public:
     virtual ~IRanker() = default;
 
     // Returns a sorted list of Document IDs
-    virtual std::vector<uint32_t> Rank(
+    virtual void Rank(
         const std::vector<std::pair<uint32_t, uint32_t>>& matches,
-        size_t totalDocs) const = 0;
+        size_t totalDocs,
+        std::vector<uint32_t>& outSortedIds) const = 0;
 };
 
 #endif //SEARCHENGINE_IRANKER_H
