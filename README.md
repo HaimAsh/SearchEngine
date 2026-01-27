@@ -23,6 +23,7 @@ The engine is divided into three primary layers to ensure high maintainability a
 2. **Storage Layer:** A **CInvertedIndex** that maps tokens to a list of postings (DocID + Frequency) and maintains global document statistics for normalization.
 3. **Ranking Layer:** An extensible **IRanker** interface that processes query results and sorts them by relevance.
 
+```mermaid
 classDiagram
 class CSearchEngine {
 -CInvertedIndex m_index
@@ -73,7 +74,7 @@ class CSearchEngine {
     IRanker <|-- CTF_IDFRanker : implements
     IRanker <|-- CFrequencyRanker : implements
     RankerFactory ..> IRanker : creates
-
+```
 ---
 
 ## Reliability & Testing
