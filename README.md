@@ -23,7 +23,56 @@ The engine is divided into three primary layers to ensure high maintainability a
 2. **Storage Layer:** A **CInvertedIndex** that maps tokens to a list of postings (DocID + Frequency) and maintains global document statistics for normalization.
 3. **Ranking Layer:** An extensible **IRanker** interface that processes query results and sorts them by relevance.
 
+classDiagram
+class CSearchEngine {
+-CInvertedIndex m_index
+-unique_ptr~IRanker~ m_ranker
++Search(string query)
++SetRanker(unique_ptr~IRanker~)
+}
 
+    class CTokenizer {
+        -string_view m_text
+        -flat_hash_set m_stopWords
+        +Next() string_view
+        +HasNext() bool
+    }
+
+    class CInvertedIndex {
+        -flat_hash_map m_invertedIndex
+        -vector m_docTitles
+        +AddToken(token, id)
+        +GetIDsOfToken(token)
+    }
+
+    class IRanker {
+        <<interface>>
+        +Rank(queryResults, docLengths, docTitles)*
+    }
+
+    class CBM25Ranker {
+        +Rank()
+    }
+
+    class CTF_IDFRanker {
+        +Rank()
+    }
+
+    class CFrequencyRanker {
+        +Rank()
+    }
+
+    class RankerFactory {
+        +CreateRanker(type) unique_ptr~IRanker~
+    }
+
+    CSearchEngine --> CInvertedIndex : contains
+    CSearchEngine --> IRanker : uses
+    CInvertedIndex ..> CTokenizer : uses for ingestion
+    IRanker <|-- CBM25Ranker : implements
+    IRanker <|-- CTF_IDFRanker : implements
+    IRanker <|-- CFrequencyRanker : implements
+    RankerFactory ..> IRanker : creates
 
 ---
 
