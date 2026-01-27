@@ -11,7 +11,7 @@ class CFrequencyRanker : public IRanker
 {
 public:
         void Rank(
-        const std::vector<std::pair<uint32_t, uint32_t>>& matches,
+        const std::vector<TermPostings>& queryPosting,
         size_t totalDocs,
         std::vector<uint32_t>& outSortedIds) const override;
 };

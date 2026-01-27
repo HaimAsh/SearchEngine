@@ -39,53 +39,6 @@ std::vector<uint32_t> CInvertedIndex::GetIDsOfToken(const absl::string_view toke
     return m_emptyVector;
 }
 
-std::vector<std::pair<uint32_t, uint32_t>> CInvertedIndex::Search(absl::string_view searchString) const
-{
-    std::vector<std::pair<uint32_t, uint32_t>> result;
-    std::vector<std::pair<uint32_t, uint32_t>> temp1;
-    std::vector<std::pair<uint32_t, uint32_t>> temp2;
-    std::vector<std::string> tokens;
-    tokens.reserve(32);
-
-    CTokenizer tokenizer(searchString);
-
-    while (tokenizer.HasNext())
-    {
-        absl::string_view t = tokenizer.Next();
-        if (!t.empty()) { // ONLY add non-empty tokens!
-            tokens.emplace_back(t);
-        }
-    }
-
-    if (tokens.empty())
-    {
-        return m_emptyPairsVector;
-    }
-
-    const auto& firstList = GetPairsOfToken(tokens.back());
-    result.assign(firstList.begin(), firstList.end());
-    tokens.pop_back();
-
-    while (false == tokens.empty())
-    {
-
-        if (result.empty())
-        {
-            return m_emptyPairsVector;
-        }
-
-        temp2 = GetPairsOfToken(tokens.back());
-        tokens.pop_back();
-
-        Intersect(result, temp2, temp1);
-        std::swap(result, temp1);
-        temp1.clear();
-    }
-
-    return result;
-
-}
-
 size_t CInvertedIndex::GetUniqueWordCount() const
 {
     return m_invertedIndex.size();
