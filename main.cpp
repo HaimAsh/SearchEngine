@@ -72,9 +72,9 @@ int main()
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
     RankerType type = static_cast<RankerType>(choice - 1);
-    searchEngine.SetRanker(RankerFactory::CreateRanker(type));
+    searchEngine.SetRanker(CRankerFactory::CreateRanker(type));
 
-    searchEngine.SetRanker(RankerFactory::CreateRanker(type));
+    searchEngine.SetRanker(CRankerFactory::CreateRanker(type));
 
     while (true) {
         std::cout << "\nEnter search query (or 'exit'): ";

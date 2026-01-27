@@ -64,16 +64,3 @@ const std::string& CInvertedIndex::GetTitle(uint32_t ID) const
 {
     return m_docTitles[ID];
 }
-
-const std::vector<std::pair<uint32_t, uint32_t>>&
-CInvertedIndex::GetPairsOfToken(const absl::string_view token) const
-{
-    auto it = m_invertedIndex.find(token);
-    if (it != m_invertedIndex.end())
-    {
-        return it->second; // Return the reference directly
-    }
-
-    // We need an empty vector of pairs as a static member to return if not found
-    return m_emptyPairsVector;
-}

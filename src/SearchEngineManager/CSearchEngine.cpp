@@ -6,6 +6,7 @@
 
 bool CSearchEngine::Init(const std::string &filePath)
 {
+    bool res = false;
     try
     {
         CWikiMediaParser parser([&](const CDocument& doc)
@@ -27,7 +28,7 @@ bool CSearchEngine::Init(const std::string &filePath)
             }
         });
 
-        parser.ParseFile(filePath);
+        res = parser.ParseFile(filePath);
     }
     catch (std::exception& e)
     {
@@ -35,7 +36,7 @@ bool CSearchEngine::Init(const std::string &filePath)
         return false;
     }
 
-    return true;
+    return res;
 }
 
 void CSearchEngine::Search(const std::string &query, std::vector<std::string>& hits) const
