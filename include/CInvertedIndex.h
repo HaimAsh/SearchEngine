@@ -28,19 +28,22 @@ public:
 
     [[nodiscard]] size_t GetNumOfDocs() const { return m_numOfDocs; }
 
-    MapIterator GetIterator(std::string_view query) const {
+    MapIterator GetIterator(std::string_view query) const
+    {
         return m_invertedIndex.find(query);
     }
 
-    MapIterator End() const {
+    MapIterator End() const
+    {
         return m_invertedIndex.end();
     }
 
-private:
+    const std::vector<uint32_t> &GetDocWordCounts() const
+    {
+        return m_docWordCounts;
+    }
 
-    static void Intersect(const std::vector<std::pair<uint32_t, uint32_t>>& v1,
-                   const std::vector<std::pair<uint32_t, uint32_t>>& v2,
-                   std::vector<std::pair<uint32_t, uint32_t>>& result);
+private:
 
     absl::flat_hash_map<std::string, std::vector<std::pair<uint32_t, uint32_t>>> m_invertedIndex;
 
@@ -51,6 +54,8 @@ private:
     size_t m_numOfDocs = 0;
 
     std::vector<std::pair<uint32_t, uint32_t>> m_emptyPairsVector;
+
+    std::vector<uint32_t> m_docWordCounts;
 };
 
 #endif //SEARCHENGINE_CINVERTEDINDEX_H

@@ -8,7 +8,7 @@
 
 void CFrequencyRanker::Rank(
         const std::vector<TermPostings>& queryPosting,
-        size_t totalDocs,
+        const std::vector<uint32_t>& docLengths,
         std::vector<uint32_t>& outSortedIds) const
 {
         outSortedIds.clear();

@@ -68,7 +68,7 @@ void CSearchEngine::Search(const std::string &query, std::vector<std::string>& h
     hits.reserve(queryResults.size());
 
     std::vector<uint32_t> sortedRes;
-    m_ranker->Rank(queryResults, m_invertedIndex.GetNumOfDocs(), sortedRes);
+    m_ranker->Rank(queryResults, m_invertedIndex.GetDocWordCounts(), sortedRes);
 
     for (auto& iter : sortedRes)
     {

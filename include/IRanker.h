@@ -22,7 +22,7 @@ public:
     // Returns a sorted list of Document IDs
     virtual void Rank(
         const std::vector<TermPostings>& queryPosting,
-        size_t totalDocs,
+        const std::vector<uint32_t>& docLengths,
         std::vector<uint32_t>& outSortedIds) const = 0;
 };
 
