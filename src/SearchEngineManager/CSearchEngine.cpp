@@ -4,10 +4,8 @@
 
 #include "CSearchEngine.h"
 
-bool CSearchEngine::Init(const std::string &filePath, IRanker* ranker)
+bool CSearchEngine::Init(const std::string &filePath)
 {
-    m_ranker = ranker;
-
     try
     {
         CWikiMediaParser parser([&](const CDocument& doc)
