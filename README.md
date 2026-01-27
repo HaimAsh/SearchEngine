@@ -25,12 +25,18 @@ The engine is divided into three primary layers to ensure high maintainability a
 
 ```mermaid
 classDiagram
-class CSearchEngine {
--CInvertedIndex m_index
--unique_ptr~IRanker~ m_ranker
-+Search(string query)
-+SetRanker(unique_ptr~IRanker~)
-}
+    class CSearchEngine {
+        -CInvertedIndex m_index
+        -unique_ptr~IRanker~ m_ranker
+        +BuildIndex(string xmlPath)
+        +Search(string query)
+        +SetRanker(unique_ptr~IRanker~)
+    }
+
+    class CWikiMediaParser {
+        -string m_filePath
+        +Parse(CInvertedIndex& index)
+    }
 
     class CTokenizer {
         -string_view m_text
@@ -43,6 +49,7 @@ class CSearchEngine {
         -flat_hash_map m_invertedIndex
         -vector m_docTitles
         +AddToken(token, id)
+        +AddTitle(id, title)
         +GetIDsOfToken(token)
     }
 
@@ -67,9 +74,11 @@ class CSearchEngine {
         +CreateRanker(type) unique_ptr~IRanker~
     }
 
+    CSearchEngine --> CWikiMediaParser : uses for ingestion
     CSearchEngine --> CInvertedIndex : contains
     CSearchEngine --> IRanker : uses
-    CInvertedIndex ..> CTokenizer : uses for ingestion
+    CWikiMediaParser ..> CInvertedIndex : populates
+    CWikiMediaParser ..> CTokenizer : uses for processing
     IRanker <|-- CBM25Ranker : implements
     IRanker <|-- CTF_IDFRanker : implements
     IRanker <|-- CFrequencyRanker : implements
