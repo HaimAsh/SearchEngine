@@ -8,6 +8,7 @@
 #include "CWikiMediaParser.h"
 #include "CTokenizer.h"
 #include "CInvertedIndex.h"
+#include "IRanker.h"
 
 class CSearchEngine
 {
@@ -18,7 +19,7 @@ public:
     CSearchEngine& operator=(const CSearchEngine &) = delete;
     CSearchEngine(const CSearchEngine &) = delete;
 
-    [[nodiscard]] bool Init(const std::string& filePath);
+    [[nodiscard]] bool Init(const std::string& filePath, IRanker* ranker);
 
     void Search(const std::string& query, std::vector<std::string>& hits) const;
 
@@ -26,6 +27,7 @@ public:
 
 private:
     CInvertedIndex m_invertedIndex;
+    IRanker* m_ranker = nullptr;
 };
 
 #endif //SEARCHENGINE_CSEARCHENGINE_H
