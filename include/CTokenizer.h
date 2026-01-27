@@ -17,8 +17,14 @@ public:
 
     explicit CTokenizer(std::string_view text) noexcept;
 
-
+    /// checks if there are words left in the text
+    /// @return true if words exist, false otherwise
     [[nodiscard]] bool HasNext() const;
+
+    /// searches for the next valid word
+    /// since this function is designed to be used frequently, it returns string_view to avoid returning string and
+    /// allocating extra memory, so after calling this function, copy the word, otherwise it will be invalid
+    /// @return returns string_view of the word
     std::string_view Next();
 
 private:

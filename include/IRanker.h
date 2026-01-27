@@ -15,11 +15,19 @@ struct TermPostings {
     std::vector<std::pair<uint32_t, uint32_t>> postings;
 };
 
+/// @class IRanker
+/// @brief Interface for ranking strategies.
+/// Subclasses must implement the Rank method to assign scores to documents
+/// based on term statistics and metadata.
 class IRanker {
 public:
     virtual ~IRanker() = default;
 
-    // Returns a sorted list of Document IDs
+    /// ranks the results
+    /// @param queryPosting Pre-filtered list of documents containing the query terms.
+    /// @param docLengths Pre-calculated word counts for every document in the index.
+    /// @param docTitles Titles used for field-specific boosting (e.g., title matching).
+    /// @param outSortedIds [out] Vector to be filled with document IDs sorted by relevance.
     virtual void Rank(
         const std::vector<TermPostings>& queryPosting,
         const std::vector<uint32_t>& docLengths,
