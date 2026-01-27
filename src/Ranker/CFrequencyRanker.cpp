@@ -4,12 +4,13 @@
 
 #include "CFrequencyRanker.h"
 
-std::vector<uint32_t> CFrequencyRanker::Rank(
+void CFrequencyRanker::Rank(
         const std::vector<std::pair<uint32_t, uint32_t>>& matches,
-        size_t totalDocs) const
+        size_t totalDocs,
+        std::vector<uint32_t>& outSortedIds) const
 {
-        std::vector<uint32_t> result;
-        result.reserve(matches.size());
+        outSortedIds.clear();
+        outSortedIds.reserve(matches.size());
 
         std::vector<std::pair<uint32_t, uint32_t>> sortedMatches = matches;
 
@@ -20,8 +21,6 @@ std::vector<uint32_t> CFrequencyRanker::Rank(
 
         for (const auto& it : sortedMatches)
         {
-                result.push_back(it.first);
+                outSortedIds.push_back(it.first);
         }
-
-        return result;
 }
