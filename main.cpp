@@ -4,10 +4,14 @@
 
 #include <iostream>
 #include <ostream>
-#include  <chrono>
+#include <chrono>
 #include <fstream>
 
 #include "CSearchEngine.h"
+#include "CFrequencyRanker.h"
+#include "CTF_IDFRanker.h"
+#include "CBM25Ranker.h"
+#include "CRankerFactory.h"
 
 size_t GetMemoryUsage() {
     std::ifstream file("/proc/self/status");
@@ -20,11 +24,27 @@ size_t GetMemoryUsage() {
     return 0;
 }
 
+std::unique_ptr<IRanker> CreateRanker(int choice) {
+    switch (choice) {
+        case 1:
+            return std::make_unique<CBM25Ranker>();
+        case 2:
+            return std::make_unique<CTF_IDFRanker>();
+        case 3:
+            return std::make_unique<CFrequencyRanker>();
+        default:
+            std::cout << "Invalid choice, defaulting to BM25\n";
+            return std::make_unique<CBM25Ranker>();
+    }
+}
+
 int main()
 {
     CSearchEngine searchEngine;
 
     const std::string filePath = "../data/simplewiki-latest-pages-articles.xml";
+
+    std::cout << "Starting to build index..." << std::endl;
 
     std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();
     if (false == searchEngine.Init(filePath))
@@ -43,6 +63,22 @@ int main()
 
     std::string query;
     std::cout << "\nIndex Built! " << searchEngine.GetWordCount() << " words stored." << std::endl;
+
+    std::cout << "Choose Ranker:\n1. Frequency\n2. TF-IDF\n3. BM25 (Title Boosted)\nSelection: ";
+    int choice;
+    std::cin >> choice;
+
+    RankerType type = RankerType::BM25; // Default
+    if (choice == 1)
+    {
+        type = RankerType::FREQUENCY;
+    }
+    else if (choice == 2)
+    {
+        type = RankerType::TF_IDF;
+    }
+
+    searchEngine.SetRanker(RankerFactory::CreateRanker(type));
 
     while (true) {
         std::cout << "\nEnter search query (or 'exit'): ";
