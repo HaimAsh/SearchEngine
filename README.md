@@ -77,8 +77,8 @@ classDiagram
     CSearchEngine --> CWikiMediaParser : uses for ingestion
     CSearchEngine --> CInvertedIndex : contains
     CSearchEngine --> IRanker : uses
-    CWikiMediaParser ..> CInvertedIndex : populates
-    CWikiMediaParser ..> CTokenizer : uses for processing
+    CWikiMediaParser ..> CInvertedIndex : populates via callback
+    CWikiMediaParser ..> CTokenizer : uses for processing in the callback
     IRanker <|-- CBM25Ranker : implements
     IRanker <|-- CTF_IDFRanker : implements
     IRanker <|-- CFrequencyRanker : implements
