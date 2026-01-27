@@ -6,6 +6,12 @@
 
 void CInvertedIndex::AddToken(absl::string_view token, uint32_t ID)
 {
+    // 1. Ensure the vector is large enough to hold this ID.
+    // If ID is 0, size must be 1. If ID is 100, size must be 101.
+    if (ID >= m_docWordCounts.size()) {
+        m_docWordCounts.resize(ID + 1, 0);
+    }
+
     std::vector<std::pair<uint32_t, uint32_t>>& IDs = m_invertedIndex[token];
 
     if (IDs.empty() || IDs.back().first != ID)
@@ -16,6 +22,7 @@ void CInvertedIndex::AddToken(absl::string_view token, uint32_t ID)
     {
         IDs.back().second++;
     }
+    m_docWordCounts[ID]++;
 }
 
 std::vector<uint32_t> CInvertedIndex::GetIDsOfToken(const absl::string_view token) const
@@ -69,29 +76,4 @@ CInvertedIndex::GetPairsOfToken(const absl::string_view token) const
 
     // We need an empty vector of pairs as a static member to return if not found
     return m_emptyPairsVector;
-}
-
-void CInvertedIndex::Intersect(const std::vector<std::pair<uint32_t, uint32_t>> &v1,
-    const std::vector<std::pair<uint32_t, uint32_t>> &v2, std::vector<std::pair<uint32_t, uint32_t>>& result)
-{
-    auto v1Iter = v1.begin();
-    auto v2Iter = v2.begin();
-
-    while (v1Iter != v1.end() && v2Iter != v2.end())
-    {
-        if (v1Iter->first == v2Iter->first)
-        {
-            result.emplace_back(v1Iter->first, v1Iter->second + v2Iter->second);
-            ++v1Iter;
-            ++v2Iter;
-        }
-        else if (v1Iter->first < v2Iter->first)
-        {
-            ++v1Iter;
-        }
-        else
-        {
-            ++v2Iter;
-        }
-    }
 }
