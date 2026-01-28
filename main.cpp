@@ -6,6 +6,7 @@
 #include <ostream>
 #include <chrono>
 #include <fstream>
+#include <filesystem>
 
 #include "CSearchEngine.h"
 #include "CFrequencyRanker.h"
@@ -46,6 +47,14 @@ int main(int argc, char* argv[])
     }
 
     std::string xmlPath = argv[1];
+
+    namespace fs = std::filesystem;
+
+    if (false == fs::exists(xmlPath))
+    {
+        std::cerr << "Error: File not found at " << xmlPath << std::endl;
+        return 1;
+    }
 
     CSearchEngine searchEngine;
 
