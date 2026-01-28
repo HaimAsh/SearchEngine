@@ -38,16 +38,21 @@ std::unique_ptr<IRanker> CreateRanker(int choice) {
     }
 }
 
-int main()
+int main(int argc, char* argv[])
 {
-    CSearchEngine searchEngine;
+    if (argc < 2) {
+        std::cerr << "Usage: " << argv[0] << " <path_to_wikimedia_xml_dump>" << std::endl;
+        return 1;
+    }
 
-    const std::string filePath = "../data/simplewiki-latest-pages-articles.xml";
+    std::string xmlPath = argv[1];
+
+    CSearchEngine searchEngine;
 
     std::cout << "Starting to build index..." << std::endl;
 
     std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();
-    if (false == searchEngine.Init(filePath))
+    if (false == searchEngine.Init(xmlPath))
     {
         std::cerr << "Failed to initialize" << std::endl;
         return EXIT_FAILURE;

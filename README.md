@@ -112,6 +112,11 @@ I implemented **Multi-Field Scoring**. By passing document titles to the ranking
 
 ---
 
+## Data Source
+This engine is designed to parse **Wikimedia XML Dumps**. 
+1. Download a dump (e.g., `enwiki-latest-pages-articles.xml`) from the [Official Wikimedia Dumps](https://dumps.wikimedia.org/).
+2. For testing, it is recommended to use a smaller subset or a "multistream" file.
+
 ## Build & Run
 
 ### Prerequisites
