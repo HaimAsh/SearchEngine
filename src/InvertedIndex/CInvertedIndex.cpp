@@ -14,9 +14,10 @@ void CInvertedIndex::AddToken(absl::string_view token, uint32_t ID)
 
     std::vector<std::pair<uint32_t, uint32_t>>& IDs = m_invertedIndex[token];
 
+    // Assumes tokens are added in increasing document ID order
     if (IDs.empty() || IDs.back().first != ID)
     {
-        IDs.emplace_back(ID, 0);
+        IDs.emplace_back(ID, 1);
     }
     else
     {
@@ -55,7 +56,7 @@ void CInvertedIndex::AddTitle(uint32_t ID, absl::string_view title)
 {
     if (ID >= m_docTitles.size()) {
         m_docTitles.resize(ID + 1);
-        m_numOfDocs++;
+        m_numOfDocs = m_docTitles.size();
     }
     m_docTitles[ID] = std::string(title);
 }
