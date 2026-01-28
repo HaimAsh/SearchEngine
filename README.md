@@ -130,4 +130,4 @@ This engine is designed to parse **Wikimedia XML Dumps**.
 mkdir build && cd build
 cmake ..
 make
-./SearchEngine
+./SearchEngine /path/to/your/wiki_dump.xml
