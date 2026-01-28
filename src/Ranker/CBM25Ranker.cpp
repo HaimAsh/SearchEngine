@@ -8,6 +8,7 @@
 #include <algorithm>
 
 #include "absl/container/flat_hash_map.h"
+#include "absl/container/flat_hash_set.h"
 
 size_t CBM25Ranker::CaseInsensitiveFind(std::string_view haystack, std::string_view needle, size_t pos) const
 {
@@ -75,6 +76,7 @@ void CBM25Ranker::Rank(const std::vector<TermPostings>& queryPosting,
     absl::flat_hash_map<uint32_t, double> docScores;
     size_t totalDocs = docLengths.size();
 
+    absl::flat_hash_set<std::string_view> seen;
     for (const auto& term : queryPosting)
     {
         if (term.postings.empty())
@@ -82,28 +84,38 @@ void CBM25Ranker::Rank(const std::vector<TermPostings>& queryPosting,
             continue;
         }
 
+        if (false == seen.insert(term.term).second)
+        {
+            continue;
+        }
+
+
         // 1. IDF: How rare is this word in the entire library?
         // If a word is in every document, IDF will be near 0.
         // If it's in only 10 docs, IDF will be very high.
         double df = static_cast<double>(term.postings.size());
-        double idf = std::log10(static_cast<double>(totalDocs) / (1.0 + df));
+        double N = static_cast<double>(totalDocs);
+
+        double idf = std::log(1.0 + ( N - df + 0.5) / (df + 0.5));
 
         for (const auto& [docId, freq] : term.postings) {
             double tf = static_cast<double>(freq);
             double docLen = static_cast<double>(docLengths[docId]);
 
-            // Check if the term is in the title
-            const std::string& title = docTitles[docId];
-            if (IsWholeWordMatch(title, term.term))
-            {
-                tf += 100.0; // Boost it even more for an exact word match!
-            }
-
             // This is the BM25 'Soft' Saturation formula
             double numerator = tf * (k1 + 1);
             double denominator = tf + k1 * (1 - b + b * (docLen / avgDocLength));
 
-            docScores[docId] += idf * (numerator / denominator);
+            double score = idf * (numerator / denominator);
+
+            // Check if the term is in the title
+            const std::string& title = docTitles[docId];
+            if (IsWholeWordMatch(title, term.term))
+            {
+                score *= 1.75; // Boost it even more for an exact word match!
+            }
+
+            docScores[docId] += score;
         }
     }
 
