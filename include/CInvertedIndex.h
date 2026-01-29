@@ -45,7 +45,7 @@ public:
     /// @return The title string
     [[nodiscard]] const std::string &GetTitle(uint32_t ID) const;
 
-    [[nodiscard]] size_t GetNumOfDocs() const { return m_numOfDocs; }
+    [[nodiscard]] size_t GetNumOfDocs() const { return m_docTitles.size(); }
 
     MapIterator GetIterator(std::string_view query) const
     {
@@ -74,8 +74,6 @@ private:
     std::vector<uint32_t> m_emptyVector;
 
     std::vector<std::string> m_docTitles;
-
-    size_t m_numOfDocs = 0;
 
     std::vector<std::pair<uint32_t, uint32_t>> m_emptyPairsVector;
 
