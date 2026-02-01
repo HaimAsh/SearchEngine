@@ -25,6 +25,72 @@ The engine is divided into three primary layers, now optimized for high-concurre
 2. **Storage Layer:** A thread-safe **CInvertedIndex** protected by `std::shared_mutex` for high-concurrency writes and optimized binary I/O for persistent storage.
 3. **Ranking Layer:** An extensible **IRanker** interface that processes query results and sorts them by relevance based on the selected algorithm.
 
+```mermaid
+classDiagram
+    class CSearchEngine {
+        -CInvertedIndex m_index
+        -unique_ptr[IRanker] m_ranker
+        +Init(string path) bool
+        +Search(string query)
+        +SetRanker(RankerType type)
+    }
+
+    class CWikiMediaParser {
+        -CThreadSafeQueue m_documentQueue
+        -jthread m_threads[4]
+        -function m_mergeCallback
+        +ParseFile(string filePath) bool
+        -ThreadWorkingFunction()
+    }
+
+    class CThreadSafeQueue {
+        -queue m_queue
+        -mutex m_mutex
+        -condition_variable m_cond
+        +Push(T item)
+        +Pop(T& item) bool
+        +SignalFinished()
+    }
+
+    class CInvertedIndex {
+        -flat_hash_map m_invertedIndex
+        -shared_mutex m_mapMutex
+        -vector m_docTitles
+        +MergeLocalIndex(map, counts)
+        +Save(string filename)
+        +Load(string filename)
+        +Finalize()
+    }
+
+    class CTokenizer {
+        -string_view m_text
+        +Next() string_view
+        +HasNext() bool
+    }
+
+    class IRanker {
+        <<interface>>
+        +Rank(queryResults, docTitles)*
+    }
+
+    class CBM25Ranker {
+        +Rank()
+    }
+
+    class RankerFactory {
+        +CreateRanker(type) unique_ptr[IRanker]
+    }
+
+    CSearchEngine --> CWikiMediaParser : triggers parallel parse
+    CSearchEngine --> CInvertedIndex : contains
+    CSearchEngine --> IRanker : uses
+    CWikiMediaParser --> CThreadSafeQueue : synchronizes via
+    CWikiMediaParser ..> CTokenizer : uses in workers
+    CWikiMediaParser ..> CInvertedIndex : merges results into
+    IRanker <|-- CBM25Ranker : implements
+    RankerFactory ..> IRanker : creates
+```
+
 ---
 
 ## Performance Benchmarks (Large Wiki Dataset)
