@@ -12,6 +12,8 @@
 
 #include "CThreadSafeQueue.h"
 #include "CDocument.h"
+#include "absl/container/flat_hash_map.h"
+#include "absl/strings/string_view.h"
 
 // 1. Forward declare the struct
 struct _xmlTextReader;
@@ -24,14 +26,21 @@ class CWikiMediaParser
 public:
 
     using PageCallback = std::function<void(CDocument)>;
+    // Callback 1: For titles (called immediately by workers)
+    using TitleCallback = std::function<void(uint32_t, absl::string_view)>;
+
+    // Callback 2: For merging (called once per thread at the end)
+    using MergeCallback = std::function<void(
+        absl::flat_hash_map<std::string, std::vector<std::pair<uint32_t, uint32_t>>>&&,
+        absl::flat_hash_map<uint32_t, uint32_t>&&)>;
+
+    explicit CWikiMediaParser(TitleCallback tCb, MergeCallback mCb)
+        : m_pageCallbackForTitle(std::move(tCb)), m_mergeCallback(std::move(mCb)) {}
 
     /// the function parses the wikimedia file and for each page found uses the callback function passed in the ctor
     /// @param filePath the path to the wikimedia file
     /// @return true for success, otherwise false
     [[nodiscard]] bool ParseFile(const std::string& filePath);
-
-    explicit CWikiMediaParser(PageCallback callback) : m_pageCallback(std::move(callback))
-    {}
 
     ~CWikiMediaParser() = default;
 
@@ -48,6 +57,8 @@ private:
     std::string ReadElementText(xmlTextReaderPtr reader);
 
     PageCallback m_pageCallback;
+    TitleCallback m_pageCallbackForTitle;
+    MergeCallback m_mergeCallback;
 
     CThreadSafeQueue<CDocument> m_documentQueue;
     std::vector<std::jthread> m_threads;

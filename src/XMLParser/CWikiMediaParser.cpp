@@ -5,6 +5,8 @@
 #include <libxml/xmlreader.h>
 #include "CWikiMediaParser.h"
 
+#include "CTokenizer.h"
+
 bool CWikiMediaParser::ParseFile(const std::string& filePath)
 {
     // Define a unique_ptr that calls the libxml2 closer automatically
@@ -116,13 +118,40 @@ bool CWikiMediaParser::ParseFile(const std::string& filePath)
 void CWikiMediaParser::ThreadWorkingFunction(void *arg)
 {
     auto parser = static_cast<CWikiMediaParser*>(arg);
-
     CDocument doc = {0, "", ""};
+
+    // Every thread gets its own private index
+    absl::flat_hash_map<std::string, std::vector<std::pair<uint32_t, uint32_t>>> localMap;
+    // We also need local word counts to avoid locking m_titlesMutex constantly
+    absl::flat_hash_map<uint32_t, uint32_t> localWordCounts;
 
     while (parser->m_documentQueue.Pop(doc))
     {
-        parser->m_pageCallback(doc);
+        // 1. Add title to global index
+        // because titles are unique per ID, this is fast.
+        parser->m_pageCallbackForTitle(doc.id, doc.title);
+
+        // 2. Tokenize into the LOCAL map
+        CTokenizer tokenizer(doc.text);
+        while (tokenizer.HasNext())
+        {
+            auto token = tokenizer.Next();
+            if (!token.empty())
+            {
+                auto& postings = localMap[std::string(token)];
+                if (postings.empty() || postings.back().first != doc.id) {
+                    postings.emplace_back(doc.id, 1);
+                } else {
+                    postings.back().second++;
+                }
+                localWordCounts[doc.id]++;
+            }
+        }
     }
+
+    // 3. FINAL MERGE: Now we call a new function in CInvertedIndex
+    // to merge this localMap into the global one.
+    parser->m_mergeCallback(std::move(localMap), std::move(localWordCounts));
 }
 
 std::string CWikiMediaParser::ReadElementText(xmlTextReaderPtr reader)
