@@ -7,6 +7,8 @@
 #ifndef SEARCHENGINE_CINVERTEDINDEX_H
 #define SEARCHENGINE_CINVERTEDINDEX_H
 
+#include <mutex>
+#include <shared_mutex>
 #include <string>
 #include <vector>
 #include "absl/container/flat_hash_map.h"
@@ -47,12 +49,12 @@ public:
 
     [[nodiscard]] size_t GetNumOfDocs() const { return m_docTitles.size(); }
 
-    MapIterator GetIterator(std::string_view query) const
+    [[nodiscard]] MapIterator GetIterator(std::string_view query) const
     {
         return m_invertedIndex.find(query);
     }
 
-    MapIterator End() const
+    [[nodiscard]] MapIterator End() const
     {
         return m_invertedIndex.end();
     }
@@ -67,8 +69,15 @@ public:
         return m_docTitles;
     }
 
+    void MergeLocalIndex(
+    absl::flat_hash_map<std::string, std::vector<std::pair<uint32_t, uint32_t>>>&& localMap,
+    absl::flat_hash_map<uint32_t, uint32_t>&& localCounts);
+
+    void Finalize();
+
 private:
 
+    /// mapping from word to vector of pairs of {document ID, frequency of word in document}
     absl::flat_hash_map<std::string, std::vector<std::pair<uint32_t, uint32_t>>> m_invertedIndex;
 
     std::vector<uint32_t> m_emptyVector;
@@ -78,6 +87,9 @@ private:
     std::vector<std::pair<uint32_t, uint32_t>> m_emptyPairsVector;
 
     std::vector<uint32_t> m_docWordCounts;
+
+    std::shared_mutex m_titlesMutex;
+    std::mutex m_mapMutex;
 };
 
 #endif //SEARCHENGINE_CINVERTEDINDEX_H

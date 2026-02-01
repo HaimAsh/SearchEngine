@@ -6,8 +6,8 @@
 
 void CInvertedIndex::AddToken(absl::string_view token, uint32_t ID)
 {
+    std::unique_lock unique_lock(m_mapMutex);
     // 1. Ensure the vector is large enough to hold this ID.
-    // If ID is 0, size must be 1. If ID is 100, size must be 101.
     if (ID >= m_docWordCounts.size()) {
         m_docWordCounts.resize(ID + 500, 0);
     }
@@ -54,14 +54,67 @@ size_t CInvertedIndex::GetUniqueWordCount() const
 
 void CInvertedIndex::AddTitle(uint32_t ID, absl::string_view title)
 {
-    if (ID >= m_docTitles.size())
+    /// we open another scope so the shared lock will be destroyed if resize is needed
     {
-        m_docTitles.resize(ID + 1000);
+        /// since ID qre unique if threads will try to write to the vector, each thread will write to different
+        /// index, that is thread-safe
+        std::shared_lock lock(m_titlesMutex);
+        if (ID < m_docTitles.size())
+        {
+            m_docTitles[ID] = std::string(title);
+            return;
+        }
     }
+
+    /// if we reach this part of the code then resize is needed so we lock the possabilty to write to the vector
+    std::unique_lock unique_lock(m_titlesMutex);
+    m_docTitles.resize(ID + 1000);
     m_docTitles[ID] = std::string(title);
 }
 
 const std::string& CInvertedIndex::GetTitle(uint32_t ID) const
 {
     return m_docTitles[ID];
+}
+
+void CInvertedIndex::MergeLocalIndex(
+    absl::flat_hash_map<std::string, std::vector<std::pair<uint32_t, uint32_t>>> &&localMap,
+    absl::flat_hash_map<uint32_t, uint32_t> &&localCounts)
+{
+    {
+        // 1. Merge Word Counts
+        {
+            std::unique_lock lock(m_titlesMutex);
+            for (const auto& [id, count] : localCounts) {
+                if (id >= m_docWordCounts.size()) {
+                    m_docWordCounts.resize(id + 500, 0);
+                }
+                m_docWordCounts[id] = count;
+            }
+        }
+
+        // 2. Merge Map
+        {
+            std::unique_lock lock(m_mapMutex);
+            for (auto& [token, localPostings] : localMap) {
+                auto& globalPostings = m_invertedIndex[token];
+
+                // Efficiently move the vector contents
+                globalPostings.insert(
+                    globalPostings.end(),
+                    std::make_move_iterator(localPostings.begin()),
+                    std::make_move_iterator(localPostings.end())
+                );
+            }
+        }
+    }
+}
+
+void CInvertedIndex::Finalize()
+{
+    // Parallel sort is best if you have many unique words!
+    for (auto& [token, postings] : m_invertedIndex) {
+        std::sort(postings.begin(), postings.end(),
+            [](const auto& a, const auto& b) { return a.first < b.first; });
+    }
 }
