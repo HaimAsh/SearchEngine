@@ -1,10 +1,12 @@
 # Wikipedia Search Engine (C++20)
 
-A high-performance search engine built from scratch to index and rank Wikipedia XML dumps. This project implements advanced Information Retrieval (IR) concepts including BM25 ranking, tokenization with stop-word filtering, and a custom inverted index.
+A high-performance search engine built from scratch to index and rank Wikipedia XML dumps. This project implements advanced Information Retrieval (IR) concepts including **parallel indexing**, **binary persistence**, and **BM25 ranking**.
 
 ## Key Technical Features
 
-* **High-Speed Indexing:** Processes 1.5M+ unique words from large XML dumps in under 25 seconds.
+* **Multi-Threaded Indexing:** Processes 1.5M+ unique words from large XML dumps in **~16 seconds** using a **Producer-Consumer model** with `std::jthread` and a custom thread-safe queue.
+* **Instant Binary Persistence:** Custom binary serialization layer (`Save`/`Load`) allows the engine to bypass XML parsing on subsequent launches, reaching a "Search Ready" state in **0 seconds**.
+* **Thread-Local Accumulation:** Minimizes mutex contention by utilizing local maps per thread, merged into the global index upon task completion.
 * **Memory Efficiency:** Utilizes **absl::flat_hash_map** for **O(1)** lookups and **std::string_view** for zero-copy string processing.
 * **Unit Testing:** Comprehensive test suite using **GoogleTest (GTest)** to verify tokenizer accuracy, index integrity, and ranking mathematical correctness.
 * **Advanced Ranking:** Implements multiple ranking strategies via the **Factory Pattern**:
@@ -17,89 +19,30 @@ A high-performance search engine built from scratch to index and rank Wikipedia 
 
 ## Project Architecture
 
-The engine is divided into three primary layers to ensure high maintainability and the **Open-Closed Principle**:
+The engine is divided into three primary layers, now optimized for high-concurrency:
 
-1. **Ingestion Layer:** Parses XML data and uses a stateful **CTokenizer** to strip punctuation and filter out non-informative "stop words."
-2. **Storage Layer:** A **CInvertedIndex** that maps tokens to a list of postings (DocID + Frequency) and maintains global document statistics for normalization.
-3. **Ranking Layer:** An extensible **IRanker** interface that processes query results and sorts them by relevance.
-
-```mermaid
-classDiagram
-    class CSearchEngine {
-        -CInvertedIndex m_index
-        -unique_ptr~IRanker~ m_ranker
-        +BuildIndex(string xmlPath)
-        +Search(string query)
-        +SetRanker(unique_ptr~IRanker~)
-    }
-
-    class CWikiMediaParser {
-        -string m_filePath
-        +Parse(CInvertedIndex& index)
-    }
-
-    class CTokenizer {
-        -string_view m_text
-        -flat_hash_set m_stopWords
-        +Next() string_view
-        +HasNext() bool
-    }
-
-    class CInvertedIndex {
-        -flat_hash_map m_invertedIndex
-        -vector m_docTitles
-        +AddToken(token, id)
-        +AddTitle(id, title)
-        +GetIDsOfToken(token)
-    }
-
-    class IRanker {
-        <<interface>>
-        +Rank(queryResults, docLengths, docTitles)*
-    }
-
-    class CBM25Ranker {
-        +Rank()
-    }
-
-    class CTF_IDFRanker {
-        +Rank()
-    }
-
-    class CFrequencyRanker {
-        +Rank()
-    }
-
-    class RankerFactory {
-        +CreateRanker(type) unique_ptr~IRanker~
-    }
-
-    CSearchEngine --> CWikiMediaParser : uses for ingestion
-    CSearchEngine --> CInvertedIndex : contains
-    CSearchEngine --> IRanker : uses
-    CWikiMediaParser ..> CInvertedIndex : populates via callback
-    CWikiMediaParser ..> CTokenizer : uses for processing in the callback
-    IRanker <|-- CBM25Ranker : implements
-    IRanker <|-- CTF_IDFRanker : implements
-    IRanker <|-- CFrequencyRanker : implements
-    RankerFactory ..> IRanker : creates
-```
----
-
-## Reliability & Testing
-
-To ensure the accuracy of the search results and the stability of the index, I implemented unit tests using **GoogleTest**:
-* **Tokenizer Tests:** Validated word extraction, stop-word filtering, and handling of complex delimiters.
-* **Inverted Index Tests:** Ensured that document frequencies and postings are correctly updated.
-* **Ranking Validation:** Verified that the BM25 and TF-IDF formulas produce the expected scores for known document sets.
+1. **Ingestion Layer:** A main thread reads XML data while multiple worker threads tokenize content and build thread-local indices to ensure maximum CPU utilization.
+2. **Storage Layer:** A thread-safe **CInvertedIndex** protected by `std::shared_mutex` for high-concurrency writes and optimized binary I/O for persistent storage.
+3. **Ranking Layer:** An extensible **IRanker** interface that processes query results and sorts them by relevance based on the selected algorithm.
 
 ---
 
-## Performance Benchmarks
+## Performance Benchmarks (Large Wiki Dataset)
 
-* **Build Time:** ~24 seconds (Large Wiki Dataset)
-* **Query Latency:** ~7-9ms (Single-word query across 3,900+ matches)
-* **RAM Usage:** ~618 MB (Highly optimized via efficient container usage)
+| Metric | XML Cold Build | Binary Warm Load |
+| :--- | :--- | :--- |
+| **Total Time** | **15 - 16 seconds** | **~0 seconds** |
+| **RAM Usage** | **~1.4 GB** | **~516 MB** |
+| **Words Stored** | 1,579,339 | 1,579,339 |
+| **Persistence Size** | N/A | **370 MB (.bin)** |
+
+---
+
+## Reliability & Concurrency Testing
+
+To ensure stability in a multi-threaded environment, the engine was validated using:
+* **ThreadSanitizer (TSan):** Used to detect and eliminate data races and heap-use-after-free errors during parallel execution.
+* **GoogleTest (GTest):** Used for stress testing the `CThreadSafeQueue` and ensuring indexing logic remains consistent across threads.
 
 ---
 
@@ -124,10 +67,18 @@ This engine is designed to parse **Wikimedia XML Dumps**.
 * CMake 3.15+
 * **Abseil-cpp** library - added as submodule
 * **GoogleTest** library - added as submodule
+* **Libxml2**
 
 ### Steps
 ```bash
+# Clone the repository and submodules
+git clone --recursive [https://github.com/yourusername/SearchEngine.git](https://github.com/yourusername/SearchEngine.git)
+cd SearchEngine
+
+# Build
 mkdir build && cd build
 cmake ..
 make
+
+# Run
 ./SearchEngine /path/to/your/wiki_dump.xml
