@@ -9,26 +9,15 @@ bool CSearchEngine::Init(const std::string &filePath)
     bool res = false;
     try
     {
-        CWikiMediaParser parser([&](const CDocument& doc)
-        {
-            m_invertedIndex.AddTitle(doc.id, doc.title);
-
-            CTokenizer tokenizer(doc.text);
-
-            absl::string_view token;
-
-            while (tokenizer.HasNext())
-            {
-                token = tokenizer.Next();
-
-                if (false == token.empty())
-                {
-                    m_invertedIndex.AddToken(token, doc.id);
-                }
-            }
+        CWikiMediaParser parser([&](uint32_t id, absl::string_view title) {
+        m_invertedIndex.AddTitle(id, title);
+        }, [&](auto&& localMap, auto&& localCounts) {
+            m_invertedIndex.MergeLocalIndex(std::move(localMap), std::move(localCounts));
         });
 
         res = parser.ParseFile(filePath);
+
+        m_invertedIndex.Finalize();
     }
     catch (std::exception& e)
     {
