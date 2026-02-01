@@ -8,7 +8,9 @@
 
 #include <functional>
 #include <string>
+#include <thread>
 
+#include "CThreadSafeQueue.h"
 #include "CDocument.h"
 
 // 1. Forward declare the struct
@@ -36,6 +38,8 @@ public:
     CWikiMediaParser(CWikiMediaParser const&) = delete;
     CWikiMediaParser& operator=(CWikiMediaParser const&) = delete;
 
+    static void ThreadWorkingFunction(void *arg);
+
 private:
 
     /// reads an xml string, stores it in a string and frees it after finishes
@@ -44,6 +48,9 @@ private:
     std::string ReadElementText(xmlTextReaderPtr reader);
 
     PageCallback m_pageCallback;
+
+    CThreadSafeQueue<CDocument> m_documentQueue;
+    std::vector<std::jthread> m_threads;
 
     enum class LIB_NODE_TYPES
     {

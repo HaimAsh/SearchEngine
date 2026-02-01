@@ -18,6 +18,21 @@ bool CWikiMediaParser::ParseFile(const std::string& filePath)
         return false;
     }
 
+    // Start worker threads
+    uint32_t numThreads = std::thread::hardware_concurrency();
+    if (numThreads == 0)
+    {
+        numThreads = 4; // Default to 4 if unable to detect
+    }
+
+    m_threads.reserve(numThreads);
+
+    for (uint32_t i = 0; i < numThreads; ++i)
+    {
+        m_threads.emplace_back(&CWikiMediaParser::ThreadWorkingFunction, this);
+    }
+
+
     LIBXML_READER_RETURN_VALUES ret = static_cast<LIBXML_READER_RETURN_VALUES>(xmlTextReaderRead(reader.get()));
 
     while (LIBXML_READER_RETURN_VALUES::SUCCESS == ret)
@@ -86,14 +101,28 @@ bool CWikiMediaParser::ParseFile(const std::string& filePath)
 
             if (isMainNs && nsFound)
             {
-                m_pageCallback(std::move(currentDoc));
+                m_documentQueue.Push(std::move(currentDoc));
             }
         }
 
         ret = static_cast<LIBXML_READER_RETURN_VALUES>(xmlTextReaderRead(reader.get()));
     }
 
+    m_documentQueue.SignalFinished();
+
     return true;
+}
+
+void CWikiMediaParser::ThreadWorkingFunction(void *arg)
+{
+    auto parser = static_cast<CWikiMediaParser*>(arg);
+
+    CDocument doc = {0, "", ""};
+
+    while (parser->m_documentQueue.Pop(doc))
+    {
+        parser->m_pageCallback(doc);
+    }
 }
 
 std::string CWikiMediaParser::ReadElementText(xmlTextReaderPtr reader)
