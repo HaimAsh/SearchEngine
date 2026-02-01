@@ -34,7 +34,7 @@ public:
         std::unique_lock<std::mutex> lock(m_mutex);
         m_cond.wait(lock, [this]() { return !m_queue.empty() || m_finished; });
 
-        if (m_queue.empty() || m_finished)
+        if (m_queue.empty() && m_finished)
         {
             return false;
         }
