@@ -48,10 +48,13 @@ file(GLOB_RECURSE TEST_FILES ${CMAKE_CURRENT_SOURCE_DIR}/test/*.cpp)
 if(TEST_FILES)
     # Important: Create a copy of SRC_FILES without main.cpp
     set(TEST_LOGIC_FILES ${SRC_FILES})
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fno-pie -no-pie")
     list(FILTER TEST_LOGIC_FILES EXCLUDE REGEX "main.cpp")
 
     message(STATUS "Test files being built: ${TEST_FILES}")
     add_executable(run_tests ${TEST_FILES} ${TEST_LOGIC_FILES})
+
+    target_compile_options(run_tests PRIVATE -fsanitize=thread)
 
     target_include_directories(run_tests PRIVATE
             ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -66,6 +69,7 @@ if(TEST_FILES)
             absl::strings
             absl::flat_hash_map
             ${LIBXML2_LIBRARIES}
+            -fsanitize=thread
     )
 
     message(STATUS "Registered test target 'run_tests' with files: ${TEST_FILES}")
