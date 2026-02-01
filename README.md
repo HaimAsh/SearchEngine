@@ -21,7 +21,7 @@ A high-performance search engine built from scratch to index and rank Wikipedia 
 
 The engine is divided into three primary layers, now optimized for high-concurrency:
 
-1. **Ingestion Layer:** A main thread reads XML data while multiple worker threads tokenize content and build thread-local indices to ensure maximum CPU utilization.
+1. **Ingestion Layer:** A main thread reads XML data while multiple worker threads tokenize content and compute term frequencies in parallel to ensure maximum CPU utilization.
 2. **Storage Layer:** A thread-safe **CInvertedIndex** protected by `std::shared_mutex` for high-concurrency writes and optimized binary I/O for persistent storage.
 3. **Ranking Layer:** An extensible **IRanker** interface that processes query results and sorts them by relevance based on the selected algorithm.
 
