@@ -112,6 +112,15 @@ bool CWikiMediaParser::ParseFile(const std::string& filePath)
 
     m_documentQueue.SignalFinished();
 
+    // NEW: Wait for all workers to finish their loops and call the merge callback
+    for (auto& thread : m_threads)
+    {
+        if (thread.joinable())
+        {
+            thread.join();
+        }
+    }
+
     return true;
 }
 
