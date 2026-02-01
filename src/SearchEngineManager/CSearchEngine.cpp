@@ -4,9 +4,28 @@
 
 #include "CSearchEngine.h"
 
+std::string GetBinaryPath(const std::string& xmlPath)
+{
+    std::filesystem::path p(xmlPath);
+    return p.replace_extension(".bin").string();
+}
+
 bool CSearchEngine::Init(const std::string &filePath)
 {
     bool res = false;
+
+    std::string binPath = GetBinaryPath(filePath);
+    if (std::filesystem::exists(binPath))
+    {
+        res = m_invertedIndex.Load(binPath);
+        if (res)
+        {
+            return true;
+        }
+        // If Load fails (corrupt file), we log it and continue to the XML parser
+        std::cerr << "Warning: Binary index corrupt. Rebuilding from XML..." << std::endl;
+    }
+
     try
     {
         CWikiMediaParser parser([&](uint32_t id, absl::string_view title) {
@@ -18,6 +37,7 @@ bool CSearchEngine::Init(const std::string &filePath)
         res = parser.ParseFile(filePath);
 
         m_invertedIndex.Finalize();
+        m_invertedIndex.Save(binPath);
     }
     catch (std::exception& e)
     {
