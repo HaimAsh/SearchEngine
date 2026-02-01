@@ -72,7 +72,7 @@ This engine is designed to parse **Wikimedia XML Dumps**.
 ### Steps
 ```bash
 # Clone the repository and submodules
-git clone --recursive [https://github.com/yourusername/SearchEngine.git](https://github.com/yourusername/SearchEngine.git)
+git clone --recursive [https://github.com/HaimAsh/SearchEngine.git](https://github.com/HaimAsh/SearchEngine.git)
 cd SearchEngine
 
 # Build
