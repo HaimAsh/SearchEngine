@@ -5,7 +5,7 @@ A high-performance search engine built from scratch to index and rank Wikipedia 
 ## Key Technical Features
 
 * **Multi-Threaded Indexing:** Processes large XML dumps using a **Producer-Consumer model** with `std::jthread` and a custom thread-safe queue. XML parsing is single-threaded, while document analysis (tokenization and term-frequency computation) is parallelized.
-* **Instant Binary Persistence:** Custom binary serialization layer (`Save`/`Load`) allows the engine to bypass XML parsing on subsequent launches, reaching a "Search Ready" state in **0 seconds**.
+* **Instant Binary Persistence:** Custom binary serialization layer (`Save`/`Load`) allows the engine to bypass XML parsing on subsequent launches, reaching a "Search Ready" state in **~0 seconds**.
 * **Parallel Document Analysis:** Worker threads tokenize documents and compute term frequencies in parallel, inserting results into a synchronized global inverted index.
 * **Memory Efficiency:** Utilizes **absl::flat_hash_map** for **O(1)** lookups. `std::string_view` is used transiently during parsing and tokenization, while the inverted index stores owning strings to ensure safe lifetimes.
 * **Unit Testing:** Comprehensive test suite using **GoogleTest (GTest)** to verify tokenizer accuracy, index integrity, and ranking mathematical correctness.
