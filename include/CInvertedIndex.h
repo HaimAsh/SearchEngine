@@ -75,6 +75,15 @@ public:
 
     void Finalize();
 
+    /// this function saves the inverted index to a binary file
+    /// @param filename the path to the file
+    void Save(const std::string& filename) const;
+
+    /// this function loads the inverted index from a binary file
+    /// @param filename the path to the file
+    /// @return true for success, otherwise false
+    [[nodiscard]] bool Load(const std::string& filename);
+
 private:
 
     /// mapping from word to vector of pairs of {document ID, frequency of word in document}
